@@ -19,6 +19,146 @@
         <div class="refresh-info" id="refreshInfo"></div>
         <select class="period-select" id="periodSelect" onchange="loadData()">
             <option value="7">Siste 7 dager</option>
+            <option value="30">Siste 30 dager</option>
+            <option value="90">Siste 90 dager</option>
+            <option value="180" selected>Siste 6 mnd</option>
+            <option value="365">Siste 12 mnd</option>
+        </select>
+        <button class="btn-refresh" onclick="loadData()" title="Oppdater data">↻</button>
+    </div>
+</header>
+
+<!-- KPIs -->
+<div class="kpi-row" id="kpiRow">
+    <div class="kpi-card"><div class="kpi-label">Totalt saker</div><div class="kpi-value" id="kpiTotal">–</div><div class="kpi-sub" id="kpiTotalSub"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Åpne saker</div><div class="kpi-value" id="kpiOpen">–</div><div class="kpi-sub" id="kpiOpenSub"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Løsningsgrad</div><div class="kpi-value" id="kpiResolveRate">–</div><div class="kpi-sub" id="kpiResolveRateSub"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Snitt løsningstid</div><div class="kpi-value" id="kpiAvgResolve">–</div><div class="kpi-sub" id="kpiResolveSub"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Median løsningstid</div><div class="kpi-value" id="kpiMedianResolve">–</div><div class="kpi-sub" id="kpiMedianSub"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Avvik (aktive)</div><div class="kpi-value" id="kpiAvvik">–</div><div class="kpi-sub" id="kpiAvvikSub"></div></div>
+</div>
+
+<!-- Row 1: Timeline + Category -->
+<div class="charts-grid-main">
+    <div class="chart-card wide"><h3>Saker over tid</h3><canvas id="chartTimeline" height="90"></canvas></div>
+    <div class="chart-card"><h3>Kategori-fordeling</h3><canvas id="chartCategory" height="220"></canvas></div>
+</div>
+
+<!-- Row 2: Resolve time + Avvik breakdown -->
+<div class="charts-grid-main">
+    <div class="chart-card wide"><h3>Snitt løsningstid per kategori (timer)</h3><canvas id="chartResolveTime" height="90"></canvas></div>
+    <div class="chart-card"><h3>Feiltyper (Avvik)</h3><canvas id="chartAvvik" height="220"></canvas></div>
+</div>
+
+<!-- Row 3: Handlers + Stations + Status -->
+<div class="charts-grid-equal">
+    <div class="chart-card"><h3>Medarbeidere (intern aktivitet)</h3><canvas id="chartHandlers" height="200"></canvas></div>
+    <div class="chart-card"><h3>Gjenganger-stasjoner</h3><canvas id="chartStations" height="200"></canvas></div>
+    <div class="chart-card"><h3>Status-fordeling</h3><canvas id="chartStatus" height="200"></canvas></div>
+</div>
+
+<!-- Handler detail table -->
+<div class="table-section">
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Medarbeider-oversikt (basert på interne svar)</h3>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr>
+                    <th>Medarbeider</th>
+                    <th>Saker håndtert</th>
+                    <th>Antall svar</th>
+                    <th>Topp-kategorier</th>
+                </tr></thead>
+                <tbody id="handlerTableBody">
+                    <tr><td colspan="4" class="loading"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Station detail table -->
+<div class="table-section">
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Gjenganger-stasjoner (topp 20)</h3>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr>
+                    <th>Stasjon</th>
+                    <th>Totalt</th>
+                    <th>Åpne</th>
+                    <th>Snitt løsningstid</th>
+                    <th>Vanligste feiltyper</th>
+                </tr></thead>
+                <tbody id="stationTableBody">
+                    <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Ticket table -->
+<div class="table-section">
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Siste saker</h3>
+            <input type="text" class="table-search" id="tableSearch" placeholder="Søk i saker…" oninput="filterTable()">
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr>
+                    <th class="sortable" onclick="sortTable('TicketId')">ID ↕</th>
+                    <th class="sortable" onclick="sortTable('Title')">Tittel ↕</th>
+                    <th class="sortable" onclick="sortTable('Category')">Kategori ↕</th>
+                    <th class="sortable" onclick="sortTable('BaseStatus')">Status ↕</th>
+                    <th class="sortable" onclick="sortTable('Priority')">Prioritet ↕</th>
+                    <th class="sortable" onclick="sortTable('CreatedAt')">Opprettet ↕</th>
+                    <th class="sortable" onclick="sortTable('TimeToClose')">Løsningstid ↕</th>
+                </tr></thead>
+                <tbody id="ticketTableBody">
+                    <tr><td colspan="7" class="loading"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span id="tableCount"></span>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    YX Stasjonstøtte Dashboard — Data via <a href="https://docs.superoffice.com/en/api/reference/restful/rest/index.html" target="_blank">SuperOffice REST API v1</a>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YX Stasjonstøtte Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛽</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1><span class="dot">●</span> YX Stasjonstøtte Dashboard</h1>
+    </div>
+    <div class="header-right">
+        <span class="badge" id="modeBadge">Laster…</span>
+        <div class="refresh-info" id="refreshInfo"></div>
+        <select class="period-select" id="periodSelect" onchange="loadData()">
+            <option value="7">Siste 7 dager</option>
             <option value="30" selected>Siste 30 dager</option>
             <option value="90">Siste 90 dager</option>
             <option value="365">Siste 12 mnd</option>
