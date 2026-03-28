@@ -25,6 +25,69 @@ app.get('/api/status', (req, res) => {
 
 app.get('/api/tickets', async (req, res) => {
     try {
+        const days = parseInt(req.query.days) || 180;
+        const tickets = await fetchTickets(days);
+        res.json(tickets);
+    } catch (err) {
+        console.error('Error fetching tickets:', err.message);
+        res.status(502).json({ error: err.message });
+    }
+});
+
+app.get('/api/message-authors', async (req, res) => {
+    try {
+        const ids = (req.query.ids || '').split(',').map(Number).filter(Boolean);
+        if (!ids.length) return res.json({});
+        const authors = await fetchMessageAuthors(ids);
+        res.json(authors);
+    } catch (err) {
+        res.status(502).json({ error: err.message });
+    }
+});
+
+app.get('/api/categories', async (req, res) => {
+    try { res.json(await fetchCategories()); }
+    catch (err) { res.status(502).json({ error: err.message }); }
+});
+
+app.get('/api/priorities', async (req, res) => {
+    try { res.json(await fetchPriorities()); }
+    catch (err) { res.status(502).json({ error: err.message }); }
+});
+
+app.get('/api/demo-tickets', (req, res) => {
+    const days = parseInt(req.query.days) || 180;
+    res.json(generateDemoData(days));
+});
+
+app.listen(PORT, () => {
+import 'dotenv/config';
+import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { fetchTickets, fetchMessageAuthors, fetchCategories, fetchPriorities } from './superoffice.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.static(join(__dirname, '..', 'public')));
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+app.get('/api/status', (req, res) => {
+    const configured = !!(process.env.SO_BASE_URL && (
+        process.env.SO_TICKET || process.env.SO_BEARER_TOKEN || process.env.SO_BASIC_USER
+    ));
+    res.json({
+        configured,
+        environment: process.env.SO_BASE_URL ? new URL(process.env.SO_BASE_URL).hostname : null,
+        authMethod: process.env.SO_AUTH_METHOD || 'ticket'
+    });
+});
+
+app.get('/api/tickets', async (req, res) => {
+    try {
         const days = parseInt(req.query.days) || 30;
         const tickets = await fetchTickets(days);
         res.json(tickets);
