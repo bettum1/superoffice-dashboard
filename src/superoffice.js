@@ -76,9 +76,12 @@ async function getHeaders() {
 
     switch (method) {
         case 'basic': {
-            // For SuperOffice Online: authenticate to get session ticket, then use it
-            const ticket = await getSessionTicket();
-            headers['Authorization'] = `SOTicket ${ticket}`;
+            // Standard HTTP Basic auth â SuperOffice Online accepts this directly
+            const user = process.env.SO_BASIC_USER;
+            const pass = process.env.SO_BASIC_PASS;
+            if (!user || !pass) throw new Error('SO_BASIC_USER and SO_BASIC_PASS must be set');
+            const token = Buffer.from(`${user}:${pass}`).toString('base64');
+            headers['Authorization'] = `Basic ${token}`;
             break;
         }
         case 'ticket':
